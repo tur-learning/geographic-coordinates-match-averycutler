@@ -10,7 +10,7 @@ from utils import extract_files, load_data, save_to_json, print_dict, find_close
 #
 # Define the filename of the GeoJSON file containing previous results.
 
-# input_geojson_file = "..."
+input_geojson_file = "matched_nolli_features.geojson"
 
 ###############################
 # 2) Load the GeoJSON data
@@ -18,10 +18,11 @@ from utils import extract_files, load_data, save_to_json, print_dict, find_close
 # HINT: Use the `load_data()` function to read the JSON content of the file.
 #       This will return a dictionary containing all matched & non-matched features.
 
-# geojson_data = ...
+geojson_data = load_data(input_geojson_file)
 
 ###############################
 # 3) Split data between matched and non-matched entries
+
 ###############################
 # HINT: The loaded data is structured as a **FeatureCollection**.
 #       It contains both:
@@ -31,12 +32,31 @@ from utils import extract_files, load_data, save_to_json, print_dict, find_close
 # Your goal is to **separate** these two categories.
 
 # Extract the list of features from the GeoJSON data
-# features = ...
+features = geojson_data["features"]
 
 # Initialize lists to store:
 # - `nolli_data`: All Nolli features (both matched and non-matched)
 # - `matched_data`: Only matched Nolli entries
 # - `matched_ids`: The list of Nolli IDs that have been successfully matched
+
+nolli_data = []
+matched_data = []
+matched_ids = []
+
+key_to_check = "Matched_Name"
+
+for feature in features:
+
+    properties = feature.get("properties", {})
+    nolli_id = properties.get("Nolli_ID")
+
+    # nolli_data.append(feature)
+
+    if key_to_check in properties:
+        matched_data.append(feature)
+        matched_ids.append(properties.get("Nolli_ID", ""))
+    else: 
+        nolli_data.append(feature)
 
 # for each feature in features:
 #    Extract the properties dictionary
@@ -49,18 +69,38 @@ from utils import extract_files, load_data, save_to_json, print_dict, find_close
 
 ###############################
 # 4) Filter out only the non-matched Nolli entries
+# just_matched = {}
+
+# which elements in nolli_data and matched_data
+# for el in nolli_data:
+    # if el in matched_data:
+      #   nolli_id = el.get("properties", {}).get("Nolli_ID", None)  
+        
+      #   if nolli_id: 
+        #    just_matched[nolli_id] = el 
 ###############################
 # HINT: Now, filter `nolli_data` to **retain only** the Nolli features
 #       that were **not previously matched**.
 #
 # Use the `matched_ids` list to check whether each Nolli feature is already matched.
 
-# non_matched_data = []
+non_matched_data = []
+
+for feature in nolli_data:
+    properties = feature.get("properties", {})
+    nolli_id = properties.get("Nolli_ID")
+    
+    if not nolli_id in matched_ids: 
+        
+ #   if not feature in matched_ids: 
+#      unmatched = feature.get("properties", {}).get("Nolli_ID", None)
+        non_matched_data.append(feature)
+
 # for each feature in nolli_data:
 #    Extract the `Nolli_ID`
 #    If `Nolli_ID` is NOT in `matched_ids`, append to `non_matched_data`
 
-# NOTE: Use the `if not value in list:` syntax to check if an ID is in a list.
+# : Use the `if not value in list:` syntax to check if an ID is in a list.
 
 ###############################
 # 5) Load OSM features from the ZIP file
@@ -72,12 +112,17 @@ from utils import extract_files, load_data, save_to_json, print_dict, find_close
 # Use:
 # - The proper functions to extract and load the OSM data from file
 
-# zip_file = "..."
+zip_file = "../gottamatch-emall/geojson_data.zip"
+geojson_files = ["nolli_points_open.geojson", "osm_node_way_relation.geojson"]
 
+
+
+nolli_file, osm = extract_files(zip_file, geojson_files)
 # Extract
 
 # Load the OSM features dataset
-# osm_features = ...
+osm_data = load_data(osm)
+osm_features = osm_data.get("features", [])
 
 ###############################
 # 6) Find the closest OSM match for each non-matched Nolli entry
@@ -91,9 +136,8 @@ from utils import extract_files, load_data, save_to_json, print_dict, find_close
 #       Luckily, you don't have to deal with it, because we created the function
 #       `find_closest_matches`. Go to utils.py and find out how to use it!
 #       Keep the use_geodesic flag to False, otherwise it will take too much time.
-#
 
-# matches = find_closest_matches(...)
+matches = find_closest_matches(non_matched_data, osm_features)
 
 ###############################
 # 7) Save the new matches to JSON
@@ -104,6 +148,8 @@ from utils import extract_files, load_data, save_to_json, print_dict, find_close
 
 # To convert it to GeoJSON format, use the convert_to_geojson(...) function
 
+
+converted = convert_to_geojson(matches, "matches.geojson")
 
 ###############################
 # 8) Assignment Submission & Next Steps
