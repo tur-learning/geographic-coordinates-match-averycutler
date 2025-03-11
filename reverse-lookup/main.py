@@ -149,7 +149,9 @@ matches = find_closest_matches(non_matched_data, osm_features)
 # To convert it to GeoJSON format, use the convert_to_geojson(...) function
 
 
-converted = convert_to_geojson(matches, "matches.geojson")
+nolli_graphic_geojson = convert_to_geojson(matches, "nolli_geographic_match.geojson")
+
+save_to_json(matches, "nolli_geographic_match.json")
 
 ###############################
 # 8) Assignment Submission & Next Steps
